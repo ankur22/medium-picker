@@ -20,9 +20,9 @@ Pick a blog/news site to catch up on so you don't feel like you need to read eve
 
 ## REST API
 
-| Method | Endpoint                      | Query                         | Request Body | Reponse Body        | Success Code | Failures |
-|--------|-------------------------------|-------------------------------|--------------|---------------------|--------------|----------|
-| GET    | /v1/user/{userID}/blog/choose | n=int number of sites to pick | -            | [{"url": "string"}] | 200          | 404      |
+| Method | Endpoint                      | Query | Request Body | Reponse Body        | Success Code | Failures | Description             |
+|--------|-------------------------------|-------|--------------|---------------------|--------------|----------|-------------------------|
+| GET    | /v1/user/{userID}/blog/choose | n=int | -            | [{"url": "string"}] | 200          | 404      | Get n blog urls to read |
 
 ## Store Schema
 
@@ -38,7 +38,7 @@ Pick a blog/news site to catch up on so you don't feel like you need to read eve
 | Hit          | int    | Number of times this record was picked    |
 | UserId       | string | The user token this is associated with    |
 
-### User
+### Users
 
 | Name         | Type   | Description                  |
 |--------------|--------|------------------------------|
