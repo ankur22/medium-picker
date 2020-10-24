@@ -54,3 +54,7 @@ Pick a blog/news site to catch up on so you don't feel like you need to read eve
 | UserId       | string | A UUID. It's the primary key |
 | CreatedDate  | date   | When the record was created  |
 | ModifiedDate | date   | When the record was updated  |
+
+## License
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fankur22%2Fmedium-picker.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fankur22%2Fmedium-picker?ref=badge_large)
