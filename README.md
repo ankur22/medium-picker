@@ -1,5 +1,7 @@
 # medium-picker
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b06d2ab8a21941b78abc54eafd1941e4)](https://app.codacy.com/gh/ankur22/medium-picker?utm_source=github.com&utm_medium=referral&utm_content=ankur22/medium-picker&utm_campaign=Badge_Grade)
+
 Pick a blog/news site to catch up on so you don't feel like you need to read everything on the internet
 
 ## How it works
