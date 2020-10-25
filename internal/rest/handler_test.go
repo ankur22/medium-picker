@@ -124,3 +124,54 @@ func Test_Handler_Signup_Failure(t *testing.T) {
 		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
 	}
 }
+
+// TODO: Copy and pasted from above, but needs to work with SignIn
+func Test_Handler_SignIn_Success(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name   string
+		body   interface{}
+		email  string
+		userID string
+	}{
+		{
+			name:   "Sign in successful",
+			body:   pkgRest.SignInRequest{Email: "test@email.com"},
+			email:  "test@email.com",
+			userID: "a09sd09sa8d0a8sd",
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockStore(ctrl)
+		s.EXPECT().GetUser(gomock.Any(), tt.email).Return(tt.userID, nil)
+
+		h := rest.NewHandler(s)
+
+		reqB, err := json.Marshal(tt.body)
+		assert.NoError(t, err)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("PUT", "/", bytes.NewBuffer(reqB))
+
+		h.SignIn(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Result().StatusCode)
+
+		b, err := ioutil.ReadAll(resp.Body)
+		assert.NoError(t, err)
+
+		respB := pkgRest.SignInResponse{}
+
+		err = json.Unmarshal(b, &respB)
+		assert.NoError(t, err)
+
+		assert.Equal(t, tt.userID, respB.UserID)
+	}
+}
+
+// TODO: Add failure cases for sign in

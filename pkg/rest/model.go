@@ -7,3 +7,11 @@ type SignupRequest struct {
 type SignupResponse struct {
 	UserID string `json:"userId"`
 }
+
+type SignInRequest struct {
+	Email string `json:"email"`
+}
+
+type SignInResponse struct {
+	UserID string `json:"userId"`
+}

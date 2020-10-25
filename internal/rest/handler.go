@@ -20,6 +20,7 @@ import (
 
 type Store interface {
 	CreateNewUser(ctx context.Context, email string) (string, error)
+	GetUser(ctx context.Context, email string) (string, error)
 }
 
 type Handler struct {
@@ -86,6 +87,63 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(b)
 	if err != nil {
 		logging.Error(ctx, "failed to write signup response", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	defer r.Body.Close()
+
+	rb := pkgRest.SignInRequest{}
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logging.Error(ctx, "Can't read body")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = json.Unmarshal(b, &rb)
+	if err != nil {
+		logging.Error(ctx, "Can't unmarshall body")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !emailRegex.MatchString(rb.Email) {
+		logging.Error(ctx, "Email failed validation")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	id, err := h.s.GetUser(ctx, rb.Email)
+	if errors.Is(err, store.ErrUserNotFound) {
+		logging.Info(ctx, "User not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		logging.Error(ctx, "Failed to retrieve user from the store", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: Check for temporary behaviour errors and retry in the store itself
+	respB := pkgRest.SignInResponse{UserID: id}
+	b, err = json.Marshal(respB)
+	if err != nil {
+		logging.Error(ctx, "failed to marshall sign in response", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(b)
+	if err != nil {
+		logging.Error(ctx, "failed to write sign in response", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

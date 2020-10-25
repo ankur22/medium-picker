@@ -17,7 +17,7 @@ func (c Const) Is(t error) bool {
 	return ts == cs || strings.HasPrefix(ts, cs+": ")
 }
 
-func (err Const) wrap(inner error) error {
+func (err Const) Wrap(inner error) error {
 	return wrapError{msg: string(err), err: inner}
 }
 
