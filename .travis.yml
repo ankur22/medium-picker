@@ -17,5 +17,5 @@ script:
   - echo "Running tests" && go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 after_success:
-  - cd <SOURCE_DIR> && fossa test
   - bash <(curl -s https://codecov.io/bash)
+  - cd <SOURCE_DIR> && fossa test
