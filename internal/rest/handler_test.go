@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ankur22/medium-picker/internal/logging"
@@ -40,10 +41,10 @@ func Test_Handler_Signup_Success(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		s := rest.NewMockStore(ctrl)
+		s := rest.NewMockUserStore(ctrl)
 		s.EXPECT().CreateNewUser(gomock.Any(), tt.email).Return(tt.userID, nil)
 
-		h := rest.NewHandler(s)
+		h := rest.NewHandler(s, nil)
 
 		reqB, err := json.Marshal(tt.body)
 		assert.NoError(t, err)
@@ -106,12 +107,12 @@ func Test_Handler_Signup_Failure(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		s := rest.NewMockStore(ctrl)
+		s := rest.NewMockUserStore(ctrl)
 		if tt.storeError != nil {
 			s.EXPECT().CreateNewUser(gomock.Any(), gomock.Any()).Return("", tt.storeError)
 		}
 
-		h := rest.NewHandler(s)
+		h := rest.NewHandler(s, nil)
 
 		reqB, err := json.Marshal(tt.body)
 		assert.NoError(t, err)
@@ -146,10 +147,10 @@ func Test_Handler_SignIn_Success(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		s := rest.NewMockStore(ctrl)
+		s := rest.NewMockUserStore(ctrl)
 		s.EXPECT().GetUser(gomock.Any(), tt.email).Return(tt.userID, nil)
 
-		h := rest.NewHandler(s)
+		h := rest.NewHandler(s, nil)
 
 		reqB, err := json.Marshal(tt.body)
 		assert.NoError(t, err)
@@ -212,12 +213,12 @@ func Test_Handler_SignIn_Failure(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		s := rest.NewMockStore(ctrl)
+		s := rest.NewMockUserStore(ctrl)
 		if tt.storeError != nil {
 			s.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return("", tt.storeError)
 		}
 
-		h := rest.NewHandler(s)
+		h := rest.NewHandler(s, nil)
 
 		reqB, err := json.Marshal(tt.body)
 		assert.NoError(t, err)
@@ -228,5 +229,47 @@ func Test_Handler_SignIn_Failure(t *testing.T) {
 		h.SignIn(resp, req)
 
 		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
+	}
+}
+
+func Test_Handler_AddMediumSource_Success(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name   string
+		body   interface{}
+		userID string
+		source string
+	}{
+		{
+			name:   "Add source successful",
+			body:   pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID: "ds098fa0s98fd0sa",
+			source: "google.com/news",
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockUserStore(ctrl)
+		s.EXPECT().IsUser(gomock.Any(), tt.userID).Return(true, nil)
+
+		m := rest.NewMockMediumSourceStore(ctrl)
+		m.EXPECT().AddSource(gomock.Any(), tt.userID, tt.source).Return(nil)
+
+		h := rest.NewHandler(s, m)
+
+		reqB, err := json.Marshal(tt.body)
+		assert.NoError(t, err)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/", bytes.NewBuffer(reqB))
+		req = mux.SetURLVars(req, map[string]string{"userID": tt.userID})
+
+		h.AddMediumSource(resp, req)
+
+		assert.Equal(t, http.StatusNoContent, resp.Result().StatusCode)
 	}
 }

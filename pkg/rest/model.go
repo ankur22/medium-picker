@@ -15,3 +15,7 @@ type SignInRequest struct {
 type SignInResponse struct {
 	UserID string `json:"userId"`
 }
+
+type NewMediumSourceRequest struct {
+	Source string `json:"source"`
+}

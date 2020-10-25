@@ -33,20 +33,23 @@ CGO_ENABLED=0 go build -ldflags="-X 'main.Version=`cat VERSION.txt`' -X 'main.Co
 
 ## REST API
 
-| Method | Endpoint                      | Query | Request Body         | Reponse Body           | Success Code | Failures | Description             |
-|--------|-------------------------------|-------|----------------------|------------------------|--------------|----------|-------------------------|
-| POST   | /v1/user                      | -     | {"username": string} | [{"userId": "string"}] | 201          | 400 409  | Create account          |
-| PUT    | /v1/user/login                | -     | {"username": string} | [{"userId": "string"}] | 200          | 400 404  | Login                   |
-| POST   | /v1/user/{userID}/blog        | -     | {"source": string}   | -                      | 204          | 400 409  | Add a new blog source   |
-| GET    | /v1/user/{userID}/blog/choose | n=int | -                    | [{"url": "string"}]    | 200          | 400 404  | Get n blog urls to read |
+| Method | Endpoint                        | Query | Request Body         | Reponse Body                           | Success Code | Failures | Description               |
+|--------|---------------------------------|-------|----------------------|----------------------------------------|--------------|----------|---------------------------|
+| POST   | /v1/user                        | -     | {"username": string} | {"userId": "string"}                   | 201          | 400 409  | Create account            |
+| PUT    | /v1/user/login                  | -     | {"username": string} | {"userId": "string"}                   | 200          | 400 404  | Login                     |
+| POST   | /v1/user/{userID}/medium        | -     | {"source": string}   | -                                      | 204          | 400 409  | Add a new medium source   |
+| GET    | /v1/user/{userID}/medium        | p=int | -                    | [{"source": string, "Id": string, "nextPage": int}]   | 200      | 400      | Get all the sources (paginated) |
+| DELETE | /v1/user/{userID}/medium/{Id}   | -     | -                    | -                                      | 204          | 404      | Delete a medium source    |
+| GET    | /v1/user/{userID}/medium/choose | n=int | -                    | [{"url": "string"}]                    | 200          | 400 404  | Get n medium urls to read |
 
 ## Store Schema
 
-### Blogs
+### Medium Sources
 
 | Name         | Type   | Description                               |
 |--------------|--------|-------------------------------------------|
 | Source       | string | The URL to the site. It's the primary key |
+| Id           | string | A UUID                                    |
 | Hash         | string | The hash of the webpage                   |
 | Multiplier   | float  | Increase the chance of it being picked    |
 | CreatedDate  | date   | When the record was created               |

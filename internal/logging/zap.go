@@ -65,9 +65,9 @@ func WithContext(ctx context.Context) *zap.Logger {
 
 	if ctxLogger, ok := ctx.Value(loggerKey).(*zap.Logger); ok {
 		return ctxLogger
-	} else {
-		return logger
 	}
+
+	return logger
 }
 
 func Info(ctx context.Context, msg string, fields ...zap.Field) {
@@ -76,6 +76,10 @@ func Info(ctx context.Context, msg string, fields ...zap.Field) {
 
 func Error(ctx context.Context, msg string, fields ...zap.Field) {
 	WithContext(ctx).Error(msg, fields...)
+}
+
+func With(ctx context.Context, fields ...zap.Field) context.Context {
+	return context.WithValue(ctx, loggerKey, WithContext(ctx).With(fields...))
 }
 
 type loggerKeyType int
