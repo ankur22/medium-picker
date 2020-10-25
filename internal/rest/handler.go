@@ -66,6 +66,7 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: Check for temporary behaviour errors and retry in the store itself
 	respB := pkgRest.SignupResponse{UserID: id}
 	b, err = json.Marshal(respB)
 	if err != nil {

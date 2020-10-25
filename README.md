@@ -9,6 +9,12 @@
 
 Pick a blog/news site to catch up on so you don't feel like you need to read everything on the internet
 
+## How to build it
+
+```shell
+CGO_ENABLED=0 go build -ldflags="-X 'main.Version=`cat VERSION.txt`' -X 'main.Commit=`git rev-parse HEAD`'" -o ./app cmd/server/main.go
+```
+
 ## How it works
 
 ### Server
