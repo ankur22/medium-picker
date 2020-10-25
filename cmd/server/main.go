@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/ankur22/medium-picker/internal/logging"
 	"go.uber.org/zap"
+
+	"github.com/ankur22/medium-picker/internal/logging"
 )
 
 var Version string
@@ -12,7 +13,11 @@ var Version string
 func main() {
 	ctx := context.Background()
 	ctx, sync := logging.NewContext(ctx)
-	defer sync()
+	defer func() {
+		if err := sync(); err != nil {
+			logging.Error(ctx, "Can't sync logs", zap.Error(err))
+		}
+	}()
 
 	logging.Info(ctx, "Starting medium-picker", zap.String("version", Version))
 
