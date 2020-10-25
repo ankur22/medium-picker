@@ -5,7 +5,7 @@
 ![Lint everything](https://github.com/ankur22/medium-picker/workflows/Lint%20everything/badge.svg)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B20992%2Fgithub.com%2Fankur22%2Fmedium-picker.svg?type=shield)](https://app.fossa.com/projects/custom%2B20992%2Fgithub.com%2Fankur22%2Fmedium-picker?ref=badge_shield)
 [![Build Status](https://travis-ci.com/ankur22/medium-picker.svg?branch=main)](https://travis-ci.com/ankur22/medium-picker)
-[![codecov](https://codecov.io/gh/ankur22/medium-picker/branch/main/graph/badge.svg?token=T5NKEL12CW)](undefined)
+[![codecov](https://codecov.io/gh/ankur22/medium-picker/branch/main/graph/badge.svg?token=T5NKEL12CW)](https://codecov.io/gh/ankur22/medium-picker)
 
 Pick a blog/news site to catch up on so you don't feel like you need to read everything on the internet
 
