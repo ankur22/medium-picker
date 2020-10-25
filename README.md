@@ -29,7 +29,7 @@ Pick a blog/news site to catch up on so you don't feel like you need to read eve
 
 | Method | Endpoint                      | Query | Request Body         | Reponse Body           | Success Code | Failures | Description             |
 |--------|-------------------------------|-------|----------------------|------------------------|--------------|----------|-------------------------|
-| POST   | /v1/user/{userID}             | -     | {"username": string} | [{"userId": "string"}] | 200          | 400 409  | Create account          |
+| POST   | /v1/user/{userID}             | -     | {"username": string} | [{"userId": "string"}] | 201          | 400 409  | Create account          |
 | PUT    | /v1/user/{userID}/login       | -     | {"username": string} | [{"userId": "string"}] | 200          | 400 404  | Login                   |
 | POST   | /v1/user/{userID}/blog        | -     | {"source": string}   | -                      | 204          | 400 409  | Add a new blog source   |
 | GET    | /v1/user/{userID}/blog/choose | n=int | -                    | [{"url": "string"}]    | 200          | 400 404  | Get n blog urls to read |

@@ -10,6 +10,24 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+func TestContext(ctx context.Context, fields ...zap.Field) (context.Context, func() error) {
+	one.Do(func() {
+		je := zap.NewProductionEncoderConfig()
+		je.EncodeTime = zapcore.ISO8601TimeEncoder
+
+		core := zapcore.NewTee(
+			zapcore.NewCore(
+				zapcore.NewConsoleEncoder(je),
+				zapcore.AddSync(os.Stdout),
+				zap.InfoLevel,
+			),
+		)
+		logger = zap.New(core)
+	})
+
+	return context.WithValue(ctx, loggerKey, WithContext(ctx).With(fields...)), logger.Sync
+}
+
 func NewContext(ctx context.Context, fields ...zap.Field) (context.Context, func() error) {
 	one.Do(func() {
 		w := zapcore.AddSync(&lumberjack.Logger{
