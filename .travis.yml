@@ -13,7 +13,7 @@ script:
   - fossa init
   - fossa analyze
   - echo "Running golangci-lint" && golangci-lint run ./...
-  - echo "Building" && CGO_ENABLED=0 go build -ldflags="-X 'main.Version=v1.0.0'" -o ./app cmd/server/main.go
+  - echo "Building" && CGO_ENABLED=0 go build -ldflags="-X 'main.Version=`cat VERSION.txt`' -X 'main.Commit=`git rev-parse HEAD`'" -o ./app cmd/server/main.go
   - echo "Running tests" && go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 after_success:

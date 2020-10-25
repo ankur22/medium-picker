@@ -8,7 +8,10 @@ import (
 	"github.com/ankur22/medium-picker/internal/logging"
 )
 
-var Version string
+var (
+	Version string
+	Commit  string
+)
 
 func main() {
 	ctx := context.Background()
@@ -19,7 +22,7 @@ func main() {
 		}
 	}()
 
-	logging.Info(ctx, "Starting medium-picker", zap.String("version", Version))
+	logging.Info(ctx, "Starting medium-picker", zap.String("version", Version), zap.String("commit", Commit))
 
 	logging.Info(ctx, "Shutting down medium-picker")
 }
