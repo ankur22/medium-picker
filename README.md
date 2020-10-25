@@ -3,7 +3,6 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/b06d2ab8a21941b78abc54eafd1941e4)](https://app.codacy.com/gh/ankur22/medium-picker?utm_source=github.com&utm_medium=referral&utm_content=ankur22/medium-picker&utm_campaign=Badge_Grade)
 ![Lint everything](https://github.com/ankur22/medium-picker/workflows/Lint%20everything/badge.svg)
-![golangci-lint](https://github.com/ankur22/medium-picker/workflows/golangci-lint/badge.svg)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fankur22%2Fmedium-picker.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fankur22%2Fmedium-picker?ref=badge_shield)
 [![Build Status](https://travis-ci.com/ankur22/medium-picker.svg?branch=main)](https://travis-ci.com/ankur22/medium-picker)
 [![codecov](https://codecov.io/gh/ankur22/medium-picker/branch/main/graph/badge.svg?token=T5NKEL12CW)](undefined)
