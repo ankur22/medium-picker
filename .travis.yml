@@ -5,8 +5,10 @@ go:
 
 before_install:
   - go get -t -v ./...
+  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.31.0
 
 script:
+  - golangci-lint run ./...
   - CGO_ENABLED=0 go build -ldflags="-X 'main.Version=v1.0.0'" -o ./app cmd/server/main.go
   - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
