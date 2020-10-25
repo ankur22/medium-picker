@@ -32,7 +32,8 @@ func NewHandler(s Store) *Handler {
 }
 
 func (h *Handler) Add(r *mux.Router) {
-	r.HandleFunc("/user/{userID}", h.Signup)
+	r.HandleFunc("/user", h.Signup)
+	r.HandleFunc("/v1/user/login", h.SignIn)
 }
 
 func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
