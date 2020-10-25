@@ -125,7 +125,6 @@ func Test_Handler_Signup_Failure(t *testing.T) {
 	}
 }
 
-// TODO: Copy and pasted from above, but needs to work with SignIn
 func Test_Handler_SignIn_Success(t *testing.T) {
 	_, _ = logging.TestContext(context.Background())
 
@@ -174,4 +173,60 @@ func Test_Handler_SignIn_Success(t *testing.T) {
 	}
 }
 
-// TODO: Add failure cases for sign in
+func Test_Handler_SignIn_Failure(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name          string
+		body          interface{}
+		expectedError int
+		storeError    error
+	}{
+		{
+			name:          "No body",
+			body:          nil,
+			expectedError: http.StatusBadRequest,
+			storeError:    nil,
+		},
+		{
+			name:          "Invalid email",
+			body:          pkgRest.SignInRequest{Email: "not an email"},
+			expectedError: http.StatusBadRequest,
+			storeError:    nil,
+		},
+		{
+			name:          "Store failed",
+			body:          pkgRest.SignInRequest{Email: "test@email.com"},
+			expectedError: http.StatusInternalServerError,
+			storeError:    errors.New("some error"),
+		},
+		{
+			name:          "User not found",
+			body:          pkgRest.SignInRequest{Email: "test@email.com"},
+			expectedError: http.StatusNotFound,
+			storeError:    store.ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockStore(ctrl)
+		if tt.storeError != nil {
+			s.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return("", tt.storeError)
+		}
+
+		h := rest.NewHandler(s)
+
+		reqB, err := json.Marshal(tt.body)
+		assert.NoError(t, err)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("PUT", "/", bytes.NewBuffer(reqB))
+
+		h.SignIn(resp, req)
+
+		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
+	}
+}
