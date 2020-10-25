@@ -1,0 +1,15 @@
+language: go
+
+go:
+  - 1.15.3
+  - tip
+
+before_install:
+  - go get -t -v ./...
+
+script:
+  - CGO_ENABLED=0 go build -ldflags="-X 'main.Version=v1.0.0'" -o ./app cmd/server/main.go
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
