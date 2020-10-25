@@ -5,6 +5,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -13,6 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ankur22/medium-picker/internal/logging"
+	"github.com/ankur22/medium-picker/internal/store"
 	pkgRest "github.com/ankur22/medium-picker/pkg/rest"
 )
 
@@ -60,8 +62,13 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.s.CreateNewUser(ctx, rb.Email)
+	if errors.Is(err, store.ErrUserAlreadyExists) {
+		logging.Info(ctx, "User already exists")
+		w.WriteHeader(http.StatusConflict)
+		return
+	}
 	if err != nil {
-		logging.Error(ctx, "failed to store new user details", zap.Error(err))
+		logging.Error(ctx, "Failed to store new user details", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

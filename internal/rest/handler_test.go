@@ -15,6 +15,7 @@ import (
 
 	"github.com/ankur22/medium-picker/internal/logging"
 	"github.com/ankur22/medium-picker/internal/rest"
+	"github.com/ankur22/medium-picker/internal/store"
 	pkgRest "github.com/ankur22/medium-picker/pkg/rest"
 )
 
@@ -73,25 +74,31 @@ func Test_Handler_Signup_Failure(t *testing.T) {
 		name          string
 		body          interface{}
 		expectedError int
-		storeError    bool
+		storeError    error
 	}{
 		{
 			name:          "No body",
 			body:          nil,
 			expectedError: http.StatusBadRequest,
-			storeError:    false,
+			storeError:    nil,
 		},
 		{
 			name:          "Invalid email",
 			body:          pkgRest.SignupRequest{Email: "not an email"},
 			expectedError: http.StatusBadRequest,
-			storeError:    false,
+			storeError:    nil,
 		},
 		{
 			name:          "Store failed",
 			body:          pkgRest.SignupRequest{Email: "test@email.com"},
 			expectedError: http.StatusInternalServerError,
-			storeError:    true,
+			storeError:    errors.New("some error"),
+		},
+		{
+			name:          "User already exists",
+			body:          pkgRest.SignupRequest{Email: "test@email.com"},
+			expectedError: http.StatusConflict,
+			storeError:    store.ErrUserAlreadyExists,
 		},
 	}
 
@@ -100,8 +107,8 @@ func Test_Handler_Signup_Failure(t *testing.T) {
 		defer ctrl.Finish()
 
 		s := rest.NewMockStore(ctrl)
-		if tt.storeError {
-			s.EXPECT().CreateNewUser(gomock.Any(), gomock.Any()).Return("", errors.New("Some error"))
+		if tt.storeError != nil {
+			s.EXPECT().CreateNewUser(gomock.Any(), gomock.Any()).Return("", tt.storeError)
 		}
 
 		h := rest.NewHandler(s)
