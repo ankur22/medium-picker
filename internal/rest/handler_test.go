@@ -273,3 +273,78 @@ func Test_Handler_AddMediumSource_Success(t *testing.T) {
 		assert.Equal(t, http.StatusNoContent, resp.Result().StatusCode)
 	}
 }
+
+func Test_Handler_AddMediumSource_Failure(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name           string
+		body           interface{}
+		userID         string
+		expectedError  int
+		userFound      bool
+		userStoreError error
+		sourceError    error
+	}{
+		{
+			name:           "User not found",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			expectedError:  http.StatusNotFound,
+			userFound:      false,
+			userStoreError: nil,
+		},
+		{
+			name:           "User store errors",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			expectedError:  http.StatusInternalServerError,
+			userFound:      false,
+			userStoreError: errors.New("some error"),
+		},
+		{
+			name:           "Source already exists",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			expectedError:  http.StatusConflict,
+			userFound:      true,
+			userStoreError: nil,
+			sourceError:    store.ErrMediumSourceAlreadyExists,
+		},
+		{
+			name:           "Source store error",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			expectedError:  http.StatusInternalServerError,
+			userFound:      true,
+			userStoreError: nil,
+			sourceError:    errors.New("some error"),
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockUserStore(ctrl)
+		s.EXPECT().IsUser(gomock.Any(), tt.userID).Return(tt.userFound, tt.userStoreError)
+
+		m := rest.NewMockMediumSourceStore(ctrl)
+		if tt.userFound {
+			m.EXPECT().AddSource(gomock.Any(), tt.userID, gomock.Any()).Return(tt.sourceError)
+		}
+
+		h := rest.NewHandler(s, m)
+
+		reqB, err := json.Marshal(tt.body)
+		assert.NoError(t, err)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/", bytes.NewBuffer(reqB))
+		req = mux.SetURLVars(req, map[string]string{"userID": tt.userID})
+
+		h.AddMediumSource(resp, req)
+
+		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
+	}
+}
