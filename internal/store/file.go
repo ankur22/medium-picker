@@ -7,3 +7,8 @@ const (
 	ErrUserNotFound              = err.Const("user not found")
 	ErrMediumSourceAlreadyExists = err.Const("medium source already exits")
 )
+
+type Source struct {
+	URL string
+	ID  string
+}

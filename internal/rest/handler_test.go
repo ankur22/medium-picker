@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
@@ -344,6 +345,133 @@ func Test_Handler_AddMediumSource_Failure(t *testing.T) {
 		req = mux.SetURLVars(req, map[string]string{"userID": tt.userID})
 
 		h.AddMediumSource(resp, req)
+
+		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
+	}
+}
+
+func Test_Handler_GetMediumSource_Success(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name        string
+		page        int
+		userID      string
+		storeResult []store.Source
+	}{
+		{
+			name:   "Get sources",
+			page:   0,
+			userID: "ds098fa0s98fd0sa",
+			storeResult: []store.Source{
+				{ID: "1", URL: "google.com"}, {ID: "2", URL: "yahoo.com"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockUserStore(ctrl)
+		s.EXPECT().IsUser(gomock.Any(), tt.userID).Return(true, nil)
+
+		m := rest.NewMockMediumSourceStore(ctrl)
+		m.EXPECT().GetSources(gomock.Any(), tt.userID, tt.page).Return(tt.storeResult, nil)
+
+		h := rest.NewHandler(s, m)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/", nil)
+		req = mux.SetURLVars(req, map[string]string{"userID": tt.userID, "page": strconv.Itoa(tt.page)})
+
+		h.GetMediumSource(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Result().StatusCode)
+		defer resp.Result().Body.Close()
+
+		bs, err := ioutil.ReadAll(resp.Result().Body)
+		assert.NoError(t, err)
+
+		var rBody []store.Source
+		err = json.Unmarshal(bs, &rBody)
+		assert.NoError(t, err)
+		assert.ElementsMatch(t, tt.storeResult, rBody)
+	}
+}
+
+func Test_Handler_GetMediumSource_Failure(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name           string
+		body           interface{}
+		userID         string
+		page           int
+		expectedError  int
+		userFound      bool
+		userStoreError error
+		sourceError    error
+	}{
+		{
+			name:           "User not found",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			page:           0,
+			expectedError:  http.StatusNotFound,
+			userFound:      false,
+			userStoreError: nil,
+		},
+		{
+			name:           "User store errors",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			page:           0,
+			expectedError:  http.StatusInternalServerError,
+			userFound:      false,
+			userStoreError: errors.New("some error"),
+		},
+		{
+			name:           "page less than 0",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			page:           -1,
+			expectedError:  http.StatusBadRequest,
+			userFound:      true,
+			userStoreError: nil,
+			sourceError:    nil,
+		},
+		{
+			name:           "Source store error",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			page:           0,
+			expectedError:  http.StatusInternalServerError,
+			userFound:      true,
+			userStoreError: nil,
+			sourceError:    errors.New("some error"),
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockUserStore(ctrl)
+		s.EXPECT().IsUser(gomock.Any(), tt.userID).Return(tt.userFound, tt.userStoreError)
+
+		m := rest.NewMockMediumSourceStore(ctrl)
+		if tt.userFound && tt.sourceError != nil {
+			m.EXPECT().GetSources(gomock.Any(), tt.userID, tt.page).Return(nil, tt.sourceError)
+		}
+
+		h := rest.NewHandler(s, m)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/", nil)
+		req = mux.SetURLVars(req, map[string]string{"userID": tt.userID, "page": strconv.Itoa(tt.page)})
+
+		h.GetMediumSource(resp, req)
 
 		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
 	}
