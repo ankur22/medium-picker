@@ -476,3 +476,103 @@ func Test_Handler_GetMediumSource_Failure(t *testing.T) {
 		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
 	}
 }
+
+func Test_Handler_DeleteMediumSource_Success(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name     string
+		sourceID string
+		userID   string
+	}{
+		{
+			name:     "Get sources",
+			sourceID: "kjn4t43wknt",
+			userID:   "ds098fa0s98fd0sa",
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockUserStore(ctrl)
+		s.EXPECT().IsUser(gomock.Any(), tt.userID).Return(true, nil)
+
+		m := rest.NewMockMediumSourceStore(ctrl)
+		m.EXPECT().DeleteSource(gomock.Any(), tt.userID, tt.sourceID).Return(nil)
+
+		h := rest.NewHandler(s, m)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/", nil)
+		req = mux.SetURLVars(req, map[string]string{"userID": tt.userID, "sourceID": tt.sourceID})
+
+		h.DeleteMediumSource(resp, req)
+
+		assert.Equal(t, http.StatusNoContent, resp.Result().StatusCode)
+	}
+}
+
+func Test_Handler_DeleteMediumSource_Failure(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name           string
+		userID         string
+		sourceID       string
+		expectedError  int
+		userFound      bool
+		userStoreError error
+		sourceError    error
+	}{
+		{
+			name:           "User not found",
+			userID:         "ds098fa0s98fd0sa",
+			sourceID:       "32j4234j2oi3",
+			expectedError:  http.StatusNotFound,
+			userFound:      false,
+			userStoreError: nil,
+		},
+		{
+			name:           "User store errors",
+			userID:         "ds098fa0s98fd0sa",
+			sourceID:       "32j4234j2oi3",
+			expectedError:  http.StatusInternalServerError,
+			userFound:      false,
+			userStoreError: errors.New("some error"),
+		},
+		{
+			name:           "Source store error",
+			userID:         "ds098fa0s98fd0sa",
+			sourceID:       "32j4234j2oi3",
+			expectedError:  http.StatusInternalServerError,
+			userFound:      true,
+			userStoreError: nil,
+			sourceError:    errors.New("some error"),
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockUserStore(ctrl)
+		s.EXPECT().IsUser(gomock.Any(), tt.userID).Return(tt.userFound, tt.userStoreError)
+
+		m := rest.NewMockMediumSourceStore(ctrl)
+		if tt.userFound {
+			m.EXPECT().DeleteSource(gomock.Any(), tt.userID, tt.sourceID).Return(tt.sourceError)
+		}
+
+		h := rest.NewHandler(s, m)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/", nil)
+		req = mux.SetURLVars(req, map[string]string{"userID": tt.userID, "sourceID": tt.sourceID})
+
+		h.DeleteMediumSource(resp, req)
+
+		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
+	}
+}

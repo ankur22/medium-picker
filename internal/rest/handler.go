@@ -30,6 +30,7 @@ type UserStore interface {
 type MediumSourceStore interface {
 	AddSource(ctx context.Context, userID string, source string) error
 	GetSources(ctx context.Context, userID string, page int) ([]store.Source, error)
+	DeleteSource(ctx context.Context, userID string, sourceID string) error
 }
 
 // Handler type for the REST service's endpoints
@@ -50,6 +51,7 @@ func (h *Handler) Add(r *mux.Router) {
 	r.HandleFunc("/v1/user/login", h.SignIn).Methods("PUT")
 	r.HandleFunc("/v1/user/{userID}/medium", h.AddMediumSource).Methods("POST")
 	r.HandleFunc("/v1/user/{userID}/medium", h.GetMediumSource).Methods("GET").Queries("p", "{page:[0-9]+}")
+	r.HandleFunc("/v1/user/{userID}/medium/{sourceID}", h.DeleteMediumSource).Methods("DELETE")
 }
 
 // Signup is the handler that will create a new user
@@ -294,6 +296,37 @@ func (h *Handler) GetMediumSource(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+}
+
+// DeleteMediumSource deletes the source for the specified userID with sourceID
+func (h *Handler) DeleteMediumSource(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	defer r.Body.Close()
+
+	params := mux.Vars(r)
+	userID := params["userID"]
+	sourceID := params["sourceID"]
+
+	ctx = logging.With(ctx, zap.String("userId", userID), zap.String("sourceID", sourceID))
+
+	if ok, err := h.s.IsUser(ctx, userID); err != nil {
+		logging.Error(ctx, "Error from store")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	} else if !ok {
+		logging.Info(ctx, "UserID not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if err := h.m.DeleteSource(ctx, userID, sourceID); err != nil {
+		logging.Error(ctx, "Error from store")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 var emailRegex = regexp.MustCompile(`(?:[a-z0-9!#$%&'*+/=?^_\x60{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_\x60{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])`)
