@@ -40,7 +40,7 @@ CGO_ENABLED=0 go build -ldflags="-X 'main.Version=`cat VERSION.txt`' -X 'main.Co
 | POST   | /v1/user/{userID}/medium        | -     | {"source": string}   | -                                      | 204          | 404 409  | Add a new medium source   |
 | GET    | /v1/user/{userID}/medium        | p=int | -                    | [{"source": string, "Id": string, "nextPage": int}]   | 200      | 400      | Get all the sources (paginated) |
 | DELETE | /v1/user/{userID}/medium/{Id}   | -     | -                    | -                                      | 204          | 404      | Delete a medium source    |
-| GET    | /v1/user/{userID}/medium/choose | p=int | -                    | [{"url": "string", "Id": string}]      | 200          | 400 404  | Get n medium urls to read |
+| GET    | /v1/user/{userID}/medium/pick   | c=int | -                    | [{"url": "string", "Id": string}]      | 200          | 400 404  | Get c medium urls to read |
 
 ## Store Schema
 
