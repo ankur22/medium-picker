@@ -626,3 +626,80 @@ func TestHandler_PickSources_Success(t *testing.T) {
 		assert.ElementsMatch(t, tt.storeResult, rBody)
 	}
 }
+
+func TestHandler_PickSources_Failure(t *testing.T) {
+	_, _ = logging.TestContext(context.Background())
+
+	tests := []struct {
+		name           string
+		body           interface{}
+		userID         string
+		count          int
+		expectedError  int
+		userFound      bool
+		userStoreError error
+		sourceError    error
+	}{
+		{
+			name:           "User not found",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			count:          0,
+			expectedError:  http.StatusNotFound,
+			userFound:      false,
+			userStoreError: nil,
+		},
+		{
+			name:           "User store errors",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			count:          0,
+			expectedError:  http.StatusInternalServerError,
+			userFound:      false,
+			userStoreError: errors.New("some error"),
+		},
+		{
+			name:           "count less than 0",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			count:          -1,
+			expectedError:  http.StatusBadRequest,
+			userFound:      true,
+			userStoreError: nil,
+			sourceError:    nil,
+		},
+		{
+			name:           "Source store error",
+			body:           pkgRest.NewMediumSourceRequest{Source: "google.com/news"},
+			userID:         "ds098fa0s98fd0sa",
+			count:          0,
+			expectedError:  http.StatusInternalServerError,
+			userFound:      true,
+			userStoreError: nil,
+			sourceError:    errors.New("some error"),
+		},
+	}
+
+	for _, tt := range tests {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		s := rest.NewMockUserStorer(ctrl)
+		s.EXPECT().IsUser(gomock.Any(), tt.userID).Return(tt.userFound, tt.userStoreError)
+
+		p := rest.NewMockMediumSourcePicker(ctrl)
+		if tt.userFound && tt.sourceError != nil {
+			p.EXPECT().Pick(gomock.Any(), tt.userID, tt.count).Return(nil, tt.sourceError)
+		}
+
+		h := rest.NewHandler(s, nil, p)
+
+		resp := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/", nil)
+		req = mux.SetURLVars(req, map[string]string{"userID": tt.userID, "count": strconv.Itoa(tt.count)})
+
+		h.PickSources(resp, req)
+
+		assert.Equal(t, tt.expectedError, resp.Result().StatusCode)
+	}
+}
