@@ -24,11 +24,6 @@ const (
 	ErrMediumSourceAlreadyExists = err.Const("medium source already exits")
 )
 
-type Source struct {
-	URL string
-	ID  string
-}
-
 // UserFile is the type that will store the user information in a file on disk
 type UserFile struct {
 	filename string
@@ -118,7 +113,7 @@ func (u *UserFile) Start(ctx context.Context) error {
 
 		f, err := os.Create(u.filename)
 		if err != nil {
-			return ErrCannotOpenUserFile
+			return ErrCannotOpenUserFile.Wrap(err)
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
@@ -153,7 +148,7 @@ func (u *UserFile) load(ctx context.Context) error {
 
 	f, err := os.Open(u.filename)
 	if err != nil {
-		return ErrCannotOpenUserFile
+		return ErrCannotOpenUserFile.Wrap(err)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -163,13 +158,13 @@ func (u *UserFile) load(ctx context.Context) error {
 
 	bb, err := ioutil.ReadAll(f)
 	if err != nil {
-		return ErrCannotReadUserFile
+		return ErrCannotReadUserFile.Wrap(err)
 	}
 
 	var data userData
 	err = json.Unmarshal(bb, &data)
 	if err != nil {
-		return ErrCannotUnmarshallUserFile
+		return ErrCannotUnmarshallUserFile.Wrap(err)
 	}
 
 	u.emails = data.Emails
