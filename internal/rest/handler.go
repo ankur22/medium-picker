@@ -8,7 +8,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"regexp"
+	"net/mail"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -83,7 +83,8 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !emailRegex.MatchString(rb.Email) {
+	_, err = mail.ParseAddress(rb.Email)
+	if err != nil {
 		logging.Error(ctx, "Email failed validation")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -145,7 +146,8 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !emailRegex.MatchString(rb.Email) {
+	_, err = mail.ParseAddress(rb.Email)
+	if err != nil {
 		logging.Error(ctx, "Email failed validation")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -334,8 +336,6 @@ func (h *Handler) PickSources(w http.ResponseWriter, r *http.Request) {
 
 	h.writeSourceResponse(ctx, w, srcs)
 }
-
-var emailRegex = regexp.MustCompile(`(?:[a-z0-9!#$%&'*+/=?^_\x60{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_\x60{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])`)
 
 func (h *Handler) isUser(ctx context.Context, userID string, w http.ResponseWriter) error {
 	if ok, err := h.s.IsUser(ctx, userID); err != nil {

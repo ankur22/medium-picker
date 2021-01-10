@@ -15,6 +15,12 @@ Pick a blog/news site to catch up on so you don't feel like you need to read eve
 CGO_ENABLED=0 go build -ldflags="-X 'main.Version=`cat VERSION.txt`' -X 'main.Commit=`git rev-parse HEAD`'" -o ./app cmd/server/main.go
 ```
 
+## TODO
+
+* Implement Postgres store for UserStorer
+* Implement Postgres store for MediumSourceStorer
+* Implement MediumSourcePicker
+
 ## How it works
 
 ### Server
