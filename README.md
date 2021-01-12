@@ -54,8 +54,8 @@ CGO_ENABLED=0 go build -ldflags="-X 'main.Version=`cat VERSION.txt`' -X 'main.Co
 
 | Name         | Type   | Description                               |
 |--------------|--------|-------------------------------------------|
-| Source       | string | The URL to the site. It's the primary key |
-| Id           | string | A UUID                                    |
+| URL          | string | The URL to the site. It's the primary key |
+| ID           | string | A UUID                                    |
 | Hash         | string | The hash of the webpage                   |
 | Multiplier   | float  | Increase the chance of it being picked    |
 | CreatedDate  | date   | When the record was created               |

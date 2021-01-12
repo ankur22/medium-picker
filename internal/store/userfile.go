@@ -61,9 +61,9 @@ func (u *UserFile) CreateNewUser(ctx context.Context, email string) (string, err
 		return "", ErrUserAlreadyExists
 	}
 
-	u.dirty = true
 	u.emails[email] = uuid.New().String()
 	u.users[u.emails[email]] = email
+	u.dirty = true
 
 	return u.emails[email], nil
 }
