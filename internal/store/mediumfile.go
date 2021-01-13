@@ -28,7 +28,7 @@ type Source struct {
 	ID  string
 }
 
-type medium struct {
+type Medium struct {
 	URL          string    `json:"url"`
 	ID           string    `json:"id"`
 	Hash         string    `json:"hash"`
@@ -43,7 +43,7 @@ type medium struct {
 type MediumFile struct {
 	filename    string
 	ticker      time.Duration
-	sources     map[string]map[string]medium
+	sources     map[string]map[string]Medium
 	lock        sync.Mutex
 	dirty       bool
 	elemsInPage int
@@ -55,7 +55,7 @@ func NewMediumFile(ctx context.Context, filename string, ticker time.Duration, e
 	m := MediumFile{
 		filename:    filename,
 		ticker:      ticker,
-		sources:     make(map[string]map[string]medium),
+		sources:     make(map[string]map[string]Medium),
 		elemsInPage: elemsInPage,
 	}
 
@@ -73,7 +73,7 @@ func (m *MediumFile) AddSource(ctx context.Context, userID string, source string
 
 	val, ok := m.sources[userID]
 	if !ok {
-		m.sources[userID] = make(map[string]medium)
+		m.sources[userID] = make(map[string]Medium)
 		val = m.sources[userID]
 	}
 
@@ -81,7 +81,7 @@ func (m *MediumFile) AddSource(ctx context.Context, userID string, source string
 		return ErrMediumSourceAlreadyExists
 	}
 
-	val[source] = medium{
+	val[source] = Medium{
 		URL:          source,
 		ID:           uuid.New().String(),
 		Hash:         "",
@@ -135,6 +135,79 @@ func (m *MediumFile) GetSources(ctx context.Context, userID string, page int) ([
 	}
 
 	return resp, nil
+}
+
+// GetAllSourceData returns the sources on the selected page
+func (m *MediumFile) GetAllSourceData(ctx context.Context, userID string, page int) ([]Medium, error) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	val, ok := m.sources[userID]
+	if !ok {
+		return nil, ErrUserNotFound
+	}
+
+	start := m.elemsInPage * page
+	if start > len(val) {
+		return nil, nil
+	}
+
+	end := start + m.elemsInPage
+	if end > len(val) {
+		end = len(val)
+	}
+
+	count := start
+	var resp []Medium
+	for _, v := range val {
+		count++
+
+		if count < start {
+			continue
+		}
+
+		if count > end {
+			break
+		}
+
+		resp = append(resp, v)
+	}
+
+	return resp, nil
+}
+
+// UpdateSource will update the given source for the user
+func (m *MediumFile) UpdateSource(ctx context.Context, userID string, source Medium) error {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	val, ok := m.sources[userID]
+	if !ok {
+		return ErrUserNotFound
+	}
+
+	var key string
+	for k, v := range val {
+		if v.ID == source.ID {
+			v.CreatedDate = source.CreatedDate
+			v.Hash = source.Hash
+			v.Hit = source.Hit
+			v.ID = source.ID
+			v.ModifiedDate = source.ModifiedDate
+			v.Multiplier = source.Multiplier
+			v.URL = source.URL
+			v.UserID = source.UserID
+			key = k
+			val[k] = v
+			break
+		}
+	}
+
+	if key == "" {
+		return ErrCannotFindMedium
+	}
+
+	return nil
 }
 
 // DeleteSource will delete a source given the userID and sourceID
@@ -229,7 +302,7 @@ func (m *MediumFile) load(ctx context.Context) error {
 		return ErrCannotReadMediumFile.Wrap(err)
 	}
 
-	var data map[string]map[string]medium
+	var data map[string]map[string]Medium
 	err = json.Unmarshal(bb, &data)
 	if err != nil {
 		return ErrCannotUnmarshallMediumFile.Wrap(err)
