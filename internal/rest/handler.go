@@ -19,14 +19,14 @@ import (
 	pkgRest "github.com/ankur22/medium-picker/pkg/rest"
 )
 
-// UserStore interface that will be used to retrieve user details
+// UserStorer interface that will be used to retrieve user details
 type UserStorer interface {
 	CreateNewUser(ctx context.Context, email string) (string, error)
 	GetUser(ctx context.Context, email string) (string, error)
 	IsUser(ctx context.Context, userID string) (bool, error)
 }
 
-// MediumSourceStore interface to retrieve medium sources
+// MediumSourceStorer interface to retrieve medium sources
 type MediumSourceStorer interface {
 	AddSource(ctx context.Context, userID string, source string) error
 	GetSources(ctx context.Context, userID string, page int) ([]store.Source, error)
